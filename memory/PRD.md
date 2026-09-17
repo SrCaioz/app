@@ -46,7 +46,7 @@ Bibliotecas usadas: `expo-image`, `expo-linear-gradient`, `@tanstack/react-query
 - **Para você** (5ª aba): `POST /api/recommend` recebe gêneros + notas dos favoritos (fallback: biblioteca) e devolve sugestões via TMDB discover / AniList genre_in / Google Books subject, excluindo itens já salvos. Tela mostra chips "Baseado em" e seções horizontais por tipo.
 - **Notas pessoais**: nota 1–10 e resenha curta (280 chars) em `PersonalNotes`, persistidas em `SavedItem.user_rating` / `review`. Card mostra "Você N".
 - **Compartilhar card**: `/share/[type]/[id]` renderiza `ShareCard` (poster + título + nota + resenha) e usa `react-native-view-shot` + `expo-sharing` para compartilhar (WhatsApp/Instagram). Na web exibe aviso (só funciona no app móvel).
-- **Anúncios (AdMob)**: `react-native-google-mobile-ads` com `AdBanner.native.tsx` / `AdBanner.web.tsx`. Em Expo Go/web mostra placeholder; em build nativo usa `TestIds.BANNER` em dev e `EXPO_PUBLIC_ADMOB_*_BANNER_ID` em produção. App IDs de TESTE do Google estão em `app.json` — trocar pelos IDs reais do painel AdMob antes de publicar.
+- **Anúncios (AdMob)**: `react-native-google-mobile-ads` com `AdBanner.native.tsx` / `AdBanner.web.tsx`. Em Expo Go/web mostra placeholder; em build nativo usa `TestIds.BANNER` em dev e `EXPO_PUBLIC_ADMOB_*_BANNER_ID` em produção. App ID real do usuário (`ca-app-pub-8788879509634638~4069552533`) em `app.json` e banner (`.../5137248314`) em `.env`, mesmos IDs para Android e iOS.
 
 ## Fora do escopo desta entrega
 - Reordenação drag-and-drop.
