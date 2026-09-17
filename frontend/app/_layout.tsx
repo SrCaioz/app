@@ -31,6 +31,10 @@ export default function RootLayout() {
                   name="details/[type]/[id]"
                   options={{ presentation: "modal", animation: "slide_from_bottom" }}
                 />
+                <Stack.Screen
+                  name="share/[type]/[id]"
+                  options={{ presentation: "modal", animation: "slide_from_bottom" }}
+                />
               </Stack>
             </KeyboardProvider>
           </QueryClientProvider>

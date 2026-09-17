@@ -45,11 +45,38 @@ function ensureSaved(item: MediaItem, existing?: SavedItem): SavedItem {
     in_favorites: existing?.in_favorites ?? false,
     in_watchlist: existing?.in_watchlist ?? false,
     status: existing?.status,
+    progress: existing?.progress ?? 0,
+    user_rating: existing?.user_rating ?? null,
+    review: existing?.review ?? "",
   };
 }
 
 function anyList(item: SavedItem): boolean {
   return item.in_library || item.in_favorites || item.in_watchlist;
+}
+
+/**
+ * Atualiza campos pessoais (progresso, nota, resenha). Se o item ainda não
+ * estiver em nenhuma lista, ele entra automaticamente na Biblioteca.
+ */
+export async function updateSaved(
+  item: MediaItem,
+  patch: Partial<Pick<SavedItem, "progress" | "user_rating" | "review" | "status">>,
+): Promise<SavedItem[]> {
+  const all = await readAll();
+  const idx = all.findIndex((x) => x.id === item.id);
+  const existing = idx >= 0 ? all[idx] : undefined;
+  const merged: SavedItem = { ...ensureSaved(item, existing), ...patch };
+  if (!anyList(merged)) merged.in_library = true;
+  let updated: SavedItem[];
+  if (idx >= 0) {
+    updated = [...all];
+    updated[idx] = merged;
+  } else {
+    updated = [merged, ...all];
+  }
+  await writeAll(updated);
+  return updated;
 }
 
 export async function toggleList(

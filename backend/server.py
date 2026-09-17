@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 import httpx
+from pydantic import BaseModel
 
 
 ROOT_DIR = Path(__file__).parent
@@ -409,6 +410,187 @@ async def trending():
         "series": [normalize_tmdb_series(x) for x in series_raw],
         "manga": [normalize_anilist_manga(x) for x in manga_raw],
         "books": [normalize_google_book(x) for x in books_raw],
+    }
+
+
+# ------------------ Recommendations ("Para você") ------------------
+
+class RecommendSeed(BaseModel):
+    type: str
+    genres: List[str] = []
+    rating: Optional[float] = None
+
+
+class RecommendRequest(BaseModel):
+    seeds: List[RecommendSeed]
+    exclude_ids: List[str] = []
+
+
+_tmdb_genre_cache: Dict[str, Dict[str, int]] = {}
+
+
+async def tmdb_genre_map(kind: str) -> Dict[str, int]:
+    """Map lowercase pt-BR genre name -> TMDB genre id for 'movie' or 'tv'."""
+    if kind in _tmdb_genre_cache:
+        return _tmdb_genre_cache[kind]
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        r = await client.get(
+            f"{TMDB_BASE}/genre/{kind}/list",
+            params={"api_key": TMDB_API_KEY, "language": "pt-BR"},
+        )
+    if r.status_code != 200:
+        return {}
+    mapping = {
+        (g.get("name") or "").lower(): g.get("id")
+        for g in r.json().get("genres", [])
+        if g.get("id") is not None
+    }
+    _tmdb_genre_cache[kind] = mapping
+    return mapping
+
+
+def resolve_tmdb_genre_ids(names: List[str], mapping: Dict[str, int]) -> List[int]:
+    ids: List[int] = []
+    for name in names:
+        key = name.lower()
+        gid = mapping.get(key)
+        if gid is None:
+            # partial match (e.g. "Ação" vs "Action & Adventure" equivalents)
+            for mk, mv in mapping.items():
+                if key in mk or mk in key:
+                    gid = mv
+                    break
+        if gid is not None and gid not in ids:
+            ids.append(gid)
+    return ids
+
+
+def top_genres(seeds: List[RecommendSeed], limit: int = 3) -> List[str]:
+    weights: Dict[str, float] = {}
+    for s in seeds:
+        w = (s.rating or 6.0) / 10.0
+        for g in s.genres or []:
+            if not g:
+                continue
+            weights[g] = weights.get(g, 0.0) + w
+    ordered = sorted(weights.items(), key=lambda kv: kv[1], reverse=True)
+    return [g for g, _ in ordered[:limit]]
+
+
+def avg_rating(seeds: List[RecommendSeed]) -> float:
+    vals = [s.rating for s in seeds if isinstance(s.rating, (int, float)) and s.rating > 0]
+    return sum(vals) / len(vals) if vals else 7.0
+
+
+@api_router.post("/recommend")
+async def recommend(body: RecommendRequest):
+    """Suggest similar titles based on the user's favourites (genres + rating)."""
+    import asyncio
+
+    exclude = set(body.exclude_ids)
+    screen_seeds = [s for s in body.seeds if s.type in ("movie", "series")]
+    manga_seeds = [s for s in body.seeds if s.type == "manga"]
+    book_seeds = [s for s in body.seeds if s.type == "book"]
+
+    async def tmdb_discover(kind: str, genre_names: List[str], min_rating: float):
+        mapping = await tmdb_genre_map(kind)
+        ids = resolve_tmdb_genre_ids(genre_names, mapping)
+        if not ids:
+            return []
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            r = await client.get(
+                f"{TMDB_BASE}/discover/{kind}",
+                params={
+                    "api_key": TMDB_API_KEY,
+                    "language": "pt-BR",
+                    "with_genres": "|".join(str(i) for i in ids),
+                    "sort_by": "popularity.desc",
+                    "vote_average.gte": round(min_rating, 1),
+                    "vote_count.gte": 200,
+                    "include_adult": "false",
+                    "page": 1,
+                },
+            )
+        if r.status_code != 200:
+            return []
+        return r.json().get("results", [])
+
+    async def anilist_by_genres(genre_names: List[str]):
+        if not genre_names:
+            return []
+        q = """
+        query ($genres: [String]) {
+          Page(page: 1, perPage: 20) {
+            media(type: MANGA, genre_in: $genres, sort: SCORE_DESC, isAdult: false) {
+              id
+              title { romaji english native }
+              coverImage { large medium }
+              bannerImage
+              description(asHtml: false)
+              averageScore
+              startDate { year }
+              status
+              chapters
+              volumes
+              genres
+            }
+          }
+        }
+        """
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            r = await client.post(
+                ANILIST_GRAPHQL_URL,
+                json={"query": q, "variables": {"genres": genre_names}},
+            )
+        if r.status_code != 200:
+            return []
+        return ((r.json().get("data") or {}).get("Page") or {}).get("media") or []
+
+    async def books_by_subject(genre_names: List[str]):
+        if not genre_names:
+            return []
+        subject = genre_names[0]
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            r = await client.get(
+                "https://www.googleapis.com/books/v1/volumes",
+                params={
+                    "q": f"subject:{subject}",
+                    "orderBy": "relevance",
+                    "maxResults": 20,
+                    "key": GOOGLE_BOOKS_API_KEY,
+                    "printType": "books",
+                },
+            )
+        if r.status_code != 200:
+            return []
+        return r.json().get("items") or []
+
+    screen_genres = top_genres(screen_seeds)
+    screen_min = max(5.5, avg_rating(screen_seeds) - 1.5)
+    manga_genres = top_genres(manga_seeds)
+    book_genres = top_genres(book_seeds, limit=1)
+
+    movies_raw, series_raw, manga_raw, books_raw = await asyncio.gather(
+        tmdb_discover("movie", screen_genres, screen_min) if screen_seeds else asyncio.sleep(0, result=[]),
+        tmdb_discover("tv", screen_genres, screen_min) if screen_seeds else asyncio.sleep(0, result=[]),
+        anilist_by_genres(manga_genres) if manga_seeds else asyncio.sleep(0, result=[]),
+        books_by_subject(book_genres) if book_seeds else asyncio.sleep(0, result=[]),
+    )
+
+    def keep(items: List[Dict[str, Any]], limit: int = 12) -> List[Dict[str, Any]]:
+        out = [x for x in items if x["id"] not in exclude]
+        out.sort(key=lambda x: (x.get("rating") or 0), reverse=True)
+        return out[:limit]
+
+    return {
+        "movies": keep([normalize_tmdb_movie(x) for x in movies_raw]),
+        "series": keep([normalize_tmdb_series(x) for x in series_raw]),
+        "manga": keep([normalize_anilist_manga(x) for x in manga_raw]),
+        "books": keep([normalize_google_book(x) for x in books_raw]),
+        "based_on": {
+            "genres": list(dict.fromkeys(screen_genres + manga_genres + book_genres)),
+            "count": len(body.seeds),
+        },
     }
 
 

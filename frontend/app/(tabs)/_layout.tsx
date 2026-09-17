@@ -45,6 +45,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="para-voce"
+        options={{
+          title: "Para você",
+          tabBarIcon: ({ focused }) => <TabIcon label="✦" active={focused} />,
+        }}
+      />
+      <Tabs.Screen
         name="biblioteca"
         options={{
           title: "Biblioteca",
@@ -61,7 +68,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="quero-consumir"
         options={{
-          title: "Quero Consumir",
+          title: "Quero",
           tabBarIcon: ({ focused }) => <TabIcon label="◔" active={focused} />,
         }}
       />

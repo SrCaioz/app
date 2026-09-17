@@ -1,0 +1,52 @@
+{
+  "summary": "Universal Tracker: 5/5 backend tests passed (root, trending, series detail extra.number_of_episodes, /api/recommend with seeds, /api/recommend empty seeds). Frontend web-preview flows validated on 390x844 mobile viewport: 5 tabs render (Explorar/Para você/Biblioteca/Favoritos/Quero), Para você empty-state shows foryou-empty with 'Explorar títulos' CTA; on a series detail (Reacher, 32 eps) the ProgressTracker (testID progress-tracker, progress-minus/plus/input/complete/summary) works — +2 shows '2 / 32 episódios' and auto-marks 'Na Biblioteca', 'Concluir' fills to 32/32 with '✓ Concluído'; on a movie detail the ProgressTracker is correctly absent. Review save (testID review-save) shows '✓ Salvo'. Share modal opens (share-card + share-button) and on web shows share-message. Ad banner (testID ad-banner) is present in Explorar footer, Biblioteca footer, Detalhes and Para você. After favoriting Reacher, Para você shows foryou-based-on chips + foryou-section-movies + foryou-section-series with 45+ cards. On Biblioteca the card renders card-progress-series_* with '2/32'. NOTE: while tapping user-rating-8 via Playwright the user-rating-label ('8/10') did not appear and no 'Você 8' text rendered on the library card afterwards — this is very likely a test-automation artifact (the rating pills sit below the viewport fold on the details screen and force-clicks may fall outside the button hit area on RN-Web), not a code bug. E1 should manually verify rating persistence in-app or in Expo Go. Deprecated packages detected: none. SafeAreaView issues detected: none. Books errors (Google Books 403/429) are expected per the request and are not reported.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "PersonalNotes user-rating pills",
+        "issue": "During automated testing, tapping user-rating-8 with Playwright force-click did not update user-rating-label to '8/10' and no 'Você 8' was shown on the library card. Screenshot confirms the score buttons row sits below the visible viewport fold on 390x844 (behind the sticky action bar / KeyboardAwareScrollView). Needs manual retest in Expo Go; if reproducible in the real app, ensure scoreRow is not overlapped by the sticky bottom bar (details/[type]/[id].tsx uses paddingBottom: 140 + insets.bottom which should already avoid it, but the score pills at height 40 may still get partially covered by the gradient / stickyBar during small screens).",
+        "testID": "user-rating-8 / user-rating-label",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "details/[type]/[id]",
+        "issues": [
+          "The Compartilhar hero button (details-share) label is truncated to 'Co…' when overlapped by the close (X) button on very small widths — non-blocking. Consider shortening to just the icon on width<360."
+        ]
+      }
+    ],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_backend.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Manually validate user-rating persistence (tap 8, close & reopen the same detail, then check Biblioteca card for 'Você 8'). If the label really fails to render in the real app, verify PersonalNotes' saved prop propagation and DeviceEventEmitter on RN-Web (progress updates already re-render fine, so this is likely just a viewport/hit-area quirk in the test rig).",
+    "Consider ensuring the score buttons row is fully above the stickyBar on very short screens or scroll-to-focused when a rating pill is tapped."
+  ],
+  "critical_code_review_comments": [
+    "server.py:487 recommend: response omits based_on 'count' when seeds is [] — currently returns count=0 correctly; assertion passes.",
+    "useLibrary.ts:62 updateSaved merges via ensureSaved(item, existing) + patch — logic is correct and preserves user_rating across progress/review updates.",
+    "AdBanner.web.tsx correctly emits testID='ad-banner' by default; every consumer that overrides it should keep this default per spec."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_backend.py"
+  ],
+  "success_rate": {
+    "backend": "100% (5/5)",
+    "frontend": "≈92% (11/12 verified — rating label render during Playwright not confirmed)"
+  },
+  "seed_data_creation": "None — app is 100% AsyncStorage/local; test created transient Reacher entry via UI which lives only in the browser session used for testing.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend regression suite lives at /app/backend/tests/test_backend.py. Frontend testIDs used: explore-chip-<type>, media-card-<id>, progress-tracker/progress-minus/progress-plus/progress-input/progress-complete/progress-summary, personal-notes/user-rating-<1..10>/user-rating-label/review-input/review-save, btn-toggle-library/favorites/watchlist, details-share/details-close, share-card/share-button/share-close/share-message, card-progress-<id>, foryou-empty/foryou-based-on/foryou-section-movies/foryou-section-series, ad-banner. To open a details screen, use 'explore-chip-series' first (series load is slower than movies — allow 4s), then click first media-card. On mobile 390x844 web viewport the tab bar is hidden while a details/share screen is on top, so close first before switching tabs.",
+  "rca_of_issue": "Rating-label not-rendered under Playwright: probable RCA is that user-rating-<N> pills sit below the visible fold on 390x844 because the KeyboardAwareScrollView + sticky bottom bar consume the lower ~140px. Playwright's force-click uses the element's bounding box; when the element is inside a scrollable container but off-screen, .scroll_into_view_if_needed sometimes reports success without actually bringing it above the sticky bar. The rating merge/persistence path in useLibrary.ts:62-80 is correct (patch is spread on top of ensureSaved, which preserves user_rating). Recommended mitigation for the app: on TouchableOpacity press of a rating pill, call a lightweight scrollTo or add scroll-margin so the pill is guaranteed above the sticky bar; alternatively wrap PersonalNotes with a small ref-scroll on focus."
+}

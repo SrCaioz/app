@@ -1,6 +1,7 @@
 import type {
   MediaItem,
   MediaType,
+  RecommendResponse,
   SearchResponse,
   TrendingResponse,
 } from "@/src/types/media";
@@ -49,4 +50,27 @@ export async function getDetail(
 
 export async function getTrending(): Promise<TrendingResponse> {
   return get<TrendingResponse>("/trending");
+}
+
+export interface RecommendSeed {
+  type: MediaType;
+  genres: string[];
+  rating?: number | null;
+}
+
+export async function getRecommendations(
+  seeds: RecommendSeed[],
+  excludeIds: string[],
+): Promise<RecommendResponse> {
+  if (!BASE) throw new Error("EXPO_PUBLIC_BACKEND_URL não configurado");
+  const res = await fetch(`${BASE}/api/recommend`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ seeds, exclude_ids: excludeIds }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`API ${res.status}: ${text || res.statusText}`);
+  }
+  return (await res.json()) as RecommendResponse;
 }

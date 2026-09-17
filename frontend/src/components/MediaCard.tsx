@@ -11,6 +11,10 @@ interface Props {
   onPress: (item: MediaItem) => void;
   width: number;
   savedBadge?: { library?: boolean; favorite?: boolean; watchlist?: boolean };
+  /** Progresso consumido (episódios/capítulos/páginas) */
+  progress?: { value: number; total: number | null };
+  /** Nota pessoal do usuário (1-10) */
+  userRating?: number | null;
 }
 
 const TYPE_BADGE_COLOR: Record<MediaType, string> = {
@@ -20,10 +24,22 @@ const TYPE_BADGE_COLOR: Record<MediaType, string> = {
   book: "#10B981",
 };
 
-export function MediaCard({ item, onPress, width, savedBadge }: Props) {
+export function MediaCard({
+  item,
+  onPress,
+  width,
+  savedBadge,
+  progress,
+  userRating,
+}: Props) {
   const posterHeight = useMemo(() => Math.round(width * 1.5), [width]);
   const rating =
     typeof item.rating === "number" ? item.rating.toFixed(1) : null;
+  const showProgress = !!progress && progress.value > 0;
+  const progressPct =
+    progress && progress.total
+      ? Math.min(100, Math.round((progress.value / progress.total) * 100))
+      : null;
 
   return (
     <TouchableOpacity
@@ -76,6 +92,22 @@ export function MediaCard({ item, onPress, width, savedBadge }: Props) {
             )}
           </View>
         )}
+        {showProgress && (
+          <View style={styles.progressWrap} pointerEvents="none">
+            <Text style={styles.progressText} testID={`card-progress-${item.id}`}>
+              {progressPct != null
+                ? progressPct >= 100
+                  ? "✓ Concluído"
+                  : `${progress!.value}/${progress!.total}`
+                : `${progress!.value}`}
+            </Text>
+            {progressPct != null && (
+              <View style={styles.progressTrack}>
+                <View style={[styles.progressFill, { width: `${progressPct}%` }]} />
+              </View>
+            )}
+          </View>
+        )}
       </View>
       <Text style={styles.title} numberOfLines={1}>
         {item.title}
@@ -86,6 +118,12 @@ export function MediaCard({ item, onPress, width, savedBadge }: Props) {
           <>
             {item.year ? <Text style={styles.metaDot}>·</Text> : null}
             <Text style={styles.metaText}>★ {rating}</Text>
+          </>
+        ) : null}
+        {userRating ? (
+          <>
+            {item.year || rating ? <Text style={styles.metaDot}>·</Text> : null}
+            <Text style={styles.userRatingText}>Você {userRating}</Text>
           </>
         ) : null}
       </View>
@@ -170,5 +208,37 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 12,
     marginHorizontal: 4,
+  },
+  userRatingText: {
+    color: colors.brandPrimary,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  progressWrap: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.sm,
+    backgroundColor: "rgba(9,9,14,0.55)",
+  },
+  progressText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  progressTrack: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "rgba(255,255,255,0.25)",
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: colors.brandPrimary,
+    borderRadius: 2,
   },
 });

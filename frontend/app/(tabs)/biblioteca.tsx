@@ -9,12 +9,14 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import AdBanner from "@/src/components/AdBanner";
 import { CategoryChips } from "@/src/components/CategoryChips";
 import { EmptyState } from "@/src/components/EmptyState";
 import { MediaCard } from "@/src/components/MediaCard";
 import { useSavedItems } from "@/src/hooks/useLibrary";
 import { colors, spacing } from "@/src/theme";
 import type { MediaItem, MediaType, SavedItem } from "@/src/types/media";
+import { progressMeta } from "@/src/utils/progress";
 
 type Filter = "all" | MediaType;
 type SortKey = "recent" | "rating" | "title";
@@ -118,8 +120,15 @@ export default function BibliotecaScreen() {
                 favorite: item.in_favorites,
                 watchlist: item.in_watchlist,
               }}
+              progress={
+                item.progress
+                  ? { value: item.progress, total: progressMeta(item)?.total ?? null }
+                  : undefined
+              }
+              userRating={item.user_rating}
             />
           )}
+          ListFooterComponent={<AdBanner />}
         />
       )}
     </View>

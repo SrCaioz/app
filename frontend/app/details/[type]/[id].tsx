@@ -5,16 +5,19 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";
 import {
   ActivityIndicator,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { getDetail } from "@/src/api/client";
+import AdBanner from "@/src/components/AdBanner";
+import { PersonalNotes } from "@/src/components/PersonalNotes";
+import { ProgressTracker } from "@/src/components/ProgressTracker";
 import { findSaved, toggleList, useSavedItems } from "@/src/hooks/useLibrary";
 import { colors, radius, spacing } from "@/src/theme";
 import {
@@ -69,9 +72,11 @@ export default function DetailsScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView
+      <KeyboardAwareScrollView
         contentContainerStyle={{ paddingBottom: 140 + insets.bottom }}
         showsVerticalScrollIndicator={false}
+        bottomOffset={120}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={[styles.heroWrap, { height: heroHeight }]}>
           {item.backdrop_url || item.cover_url ? (
@@ -96,6 +101,15 @@ export default function DetailsScreen() {
             hitSlop={12}
           >
             <Text style={styles.closeIcon}>✕</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            testID="details-share"
+            onPress={() => router.push(`/share/${item.type}/${item.external_id}`)}
+            style={[styles.shareBtn, { top: insets.top + spacing.md }]}
+            hitSlop={12}
+          >
+            <Text style={styles.shareIcon}>⇪</Text>
+            <Text style={styles.shareLabel}>Compartilhar</Text>
           </TouchableOpacity>
           <View style={styles.heroBottom}>
             <View style={styles.typePill}>
@@ -156,8 +170,12 @@ export default function DetailsScreen() {
           <Text style={styles.description}>
             {item.description || "Sem descrição disponível."}
           </Text>
+
+          <ProgressTracker item={item} saved={saved} />
+          <PersonalNotes item={item} saved={saved} />
         </View>
-      </ScrollView>
+        <AdBanner />
+      </KeyboardAwareScrollView>
 
       <View
         style={[
@@ -254,6 +272,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   closeIcon: { color: "#FFF", fontSize: 16, fontWeight: "700" },
+  shareBtn: {
+    position: "absolute",
+    left: spacing.lg,
+    height: 36,
+    paddingHorizontal: spacing.md,
+    borderRadius: 18,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  shareIcon: { color: "#FFF", fontSize: 15, fontWeight: "700" },
+  shareLabel: { color: "#FFF", fontSize: 12, fontWeight: "600" },
   heroBottom: {
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.lg,

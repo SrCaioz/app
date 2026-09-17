@@ -38,6 +38,20 @@ export interface SavedItem extends MediaItem {
   in_library: boolean;
   in_favorites: boolean;
   in_watchlist: boolean;
+  /** Episódios / capítulos / páginas consumidos */
+  progress?: number;
+  /** Nota pessoal de 1 a 10 */
+  user_rating?: number | null;
+  /** Resenha curta */
+  review?: string;
+}
+
+export interface RecommendResponse {
+  movies: MediaItem[];
+  series: MediaItem[];
+  manga: MediaItem[];
+  books: MediaItem[];
+  based_on: { genres: string[]; count: number };
 }
 
 export const CATEGORY_LABELS: Record<MediaType, string> = {

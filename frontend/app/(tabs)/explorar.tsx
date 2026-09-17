@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { getTrending, searchMedia } from "@/src/api/client";
+import AdBanner from "@/src/components/AdBanner";
 import { CategoryChips } from "@/src/components/CategoryChips";
 import { EmptyState } from "@/src/components/EmptyState";
 import { MediaCard } from "@/src/components/MediaCard";
@@ -172,6 +173,7 @@ export default function ExplorarScreen() {
           contentContainerStyle={styles.gridContent}
           columnWrapperStyle={styles.gridRow}
           keyboardShouldPersistTaps="handled"
+          ListFooterComponent={<AdBanner />}
           renderItem={({ item }) => {
             const saved = savedItems.find((s) => s.id === item.id);
             return (
