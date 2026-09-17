@@ -1,0 +1,163 @@
+{
+  "app_name": "Universal Tracker",
+  "personality": "6 Glass / Luxe DARK",
+  "personality_one_liner": "A cinematic dark-mode mobile app UI with a near-black background, poster-focused content cards, violet accent actions, minimal chrome, and sleek typography that feels like a modern film diary.",
+  "color": {
+    "surface": "#09090E",
+    "onSurface": "#F8F8F8",
+    "surfaceSecondary": "#16161D",
+    "onSurfaceSecondary": "#EAEAEA",
+    "surfaceTertiary": "#21212B",
+    "onSurfaceTertiary": "#D4D4D4",
+    "surfaceInverse": "#FFFFFF",
+    "onSurfaceInverse": "#000000",
+    "brand": "#8B5CF6",
+    "brandPrimary": "#9D4EDD",
+    "onBrandPrimary": "#FFFFFF",
+    "brandSecondary": "#7B2CBF",
+    "onBrandSecondary": "#FFFFFF",
+    "brandTertiary": "#3C096C",
+    "onBrandTertiary": "#E0B1CB",
+    "success": "#10B981",
+    "onSuccess": "#FFFFFF",
+    "warning": "#F59E0B",
+    "onWarning": "#000000",
+    "error": "#EF4444",
+    "onError": "#FFFFFF",
+    "info": "#3B82F6",
+    "onInfo": "#FFFFFF",
+    "border": "#2E2E38",
+    "borderStrong": "#4A4A57",
+    "divider": "#2A2A35",
+    "muted": "#888893"
+  },
+  "typography": {
+    "displayFontFamily": "Outfit",
+    "textFontFamily": "Geist",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24
+    }
+  },
+  "spacing": {
+    "rule": "Handle spacing correctly dont have extra spaces where its not required, handle padding and margin corectly and subtle for buttons and components",
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius_tokens": {
+    "sm": 6,
+    "md": 12,
+    "lg": 20,
+    "pill": 999
+  },
+  "shadow_tier": "0",
+  "navigation": "bottom_tabs",
+  "icon_set": "Phosphor",
+  "glassmorphism": {
+    "enabled": "true",
+    "do's": [
+      "Use blur on the bottom tab bar when content scrolls behind it.",
+      "Use blur on the pinned filter/category chips row (e.g., Filmes, Séries, Mangás) when scrolling.",
+      "Use a frosted glass overlay with a brandTertiary base on floating action buttons or sticky CTAs."
+    ],
+    "dont's": [
+      "Never blur body content, form fields, or standard grid cards."
+    ]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "expo-glass-effect",
+      "android": "expo-blur",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "expo-blur",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler"
+  },
+  "screens": [
+    {
+      "name": "Explorar",
+      "purpose": "A cinematic discovery hub featuring a search bar, category chips, and a grid of media posters fetched from external APIs.",
+      "states": {
+        "loading": "Centered spinner or grid of poster-shaped skeletons.",
+        "empty": "Glass-morphic search icon with text 'Busque por filmes, séries, mangás ou livros' and a clear CTA.",
+        "error": "Readable error message 'Não foi possível carregar os resultados' with a retry button."
+      },
+      "layout": "Sticky glass header containing the Search Bar and horizontal scrollable Category Chips (Filmes, Séries, Mangás, Livros). Below, a 2-column 'hybrid grid' (poster image aspect ratio 2:3 + short info containing Title and Year/Rating below it). Space between columns is 'md'."
+    },
+    {
+      "name": "Biblioteca",
+      "purpose": "The user's central hub for saved items across all media types, with local filtering and sorting.",
+      "states": {
+        "loading": "Poster skeletons in a 2-column grid.",
+        "empty": "Illustration/icon of an empty shelf with 'Sua biblioteca está vazia' and a CTA 'Explorar títulos'.",
+        "error": "Error message with retry button."
+      },
+      "layout": "Large header 'Biblioteca' followed by a horizontal scrollable row of Sort/Filter pills (Recentes, Avaliação, Título). The main content is the same 2-column hybrid poster grid."
+    },
+    {
+      "name": "Favoritos",
+      "purpose": "A dedicated grid for the user's highest-rated or starred items.",
+      "states": {
+        "loading": "Poster skeletons.",
+        "empty": "Icon of a star with text 'Nenhum favorito ainda' and a CTA 'Ver biblioteca'.",
+        "error": "Error message with retry button."
+      },
+      "layout": "Similar to Biblioteca, 2-column hybrid grid emphasizing the posters."
+    },
+    {
+      "name": "Quero Consumir",
+      "purpose": "A watchlist of items the user plans to watch/read in the future.",
+      "states": {
+        "loading": "Poster skeletons.",
+        "empty": "Icon of a bookmark/clock with text 'Sua lista está vazia'.",
+        "error": "Error message with retry button."
+      },
+      "layout": "2-column hybrid grid showing poster and title."
+    },
+    {
+      "name": "Detalhes",
+      "purpose": "A cinematic item detail modal showing full metadata, synopsis, and actionable status controls.",
+      "states": {
+        "loading": "Skeleton of a hero image and title.",
+        "empty": "Not applicable (data passed directly or loaded).",
+        "error": "Error message indicating the item details couldn't be fetched."
+      },
+      "layout": "Full-bleed backdrop image at the top with a 3-stop vertical gradient scrim (transparent to surface). Item title overlays the bottom of the scrim. Below the title, a row of metadata chips (Year, Rating, Genres). A text block for the Synopsis. A sticky primary CTA button ('Adicionar à Biblioteca' or 'Alterar Status') pinned to the bottom of the screen inside a safe area container, with a glass background behind the button. Secondary action icon buttons ('Favoritar', 'Quero Consumir') placed alongside."
+    }
+  ],
+  "images": {
+    "movie_poster_placeholder": {
+      "url": "https://images.unsplash.com/photo-1780764818559-1dd2205ea2c5?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTZ8MHwxfHNlYXJjaHwxfHxjaW5lbWF0aWMlMjBzY2klMjBmaSUyMG1vdmllJTIwcG9zdGVyfGVufDB8fHx8MTc4OTYwODk3OHww&ixlib=rb-4.1.0&q=85",
+      "alt": "Collection of cinematic movie posters under dark neon light"
+    },
+    "book_cover_placeholder": {
+      "url": "https://images.pexels.com/photos/20837032/pexels-photo-20837032.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "alt": "Dark minimalist book cover"
+    },
+    "manga_cover_placeholder": {
+      "url": "https://images.unsplash.com/photo-1585925474605-ad1146a5615b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTJ8MHwxfHNlYXJjaHwzfHxhbmltZSUyMG1hbmdhJTIwYXJ0d29yayUyMHBvc3RlcnxlbnwwfHx8fDE3ODk2MDg5OTZ8MA&ixlib=rb-4.1.0&q=85",
+      "alt": "Anime or manga style artwork placeholder"
+    }
+  },
+  "instructions_to_main_agent": [
+    "Strictly follow the user's request for Portuguese (Brazilian) labels across the app (Explorar, Biblioteca, Favoritos, Quero Consumir, Detalhes).",
+    "Theme Rule: Execute a deep cinematic dark mode (surface: #09090E) with the user-requested violet/purple accent (#9D4EDD). Do not use indigo/blue.",
+    "Grid Layout: The 'hybrid grid' means rendering exactly 2 columns of items using flexDirection: 'row', flexWrap: 'wrap', and justifyContent: 'space-between'. The poster image should have an aspect ratio of 2:3. Below the poster, render the Title (numberOfLines={1}) and a small metadata string (Year or Rating).",
+    "Image Gradient Scrim: On the 'Detalhes' screen, the hero image MUST have a 3-stop vertical gradient scrim (using expo-linear-gradient) over it: 'transparent' at 0% -> 'rgba(9, 9, 14, 0.4)' at 50% -> 'rgba(9, 9, 14, 1)' at 100%. This ensures the overlaying title text achieves WCAG contrast.",
+    "Bottom Tabs: Implement 4 tabs with icons representing Explore, Library, Favorites, and Watchlist. Tab bar should use glassmorphism where supported.",
+    "Sticky Actions: On the 'Detalhes' screen, keep the main CTA button ('Adicionar à Biblioteca' or Status changer) sticky at the bottom over the scrollable content. Give its container a subtle glass effect so text scrolls visibly underneath.",
+    "Typography: Use Outfit for headings and Geist for body text. Ensure all font weights are max 500.",
+    "Empty States: Each tab (Biblioteca, Favoritos, Quero Consumir) needs a distinct full-screen empty state utilizing Phosphor icons, a short Portuguese sentence, and an optional CTA to navigate to Explorar."
+  ]
+}
